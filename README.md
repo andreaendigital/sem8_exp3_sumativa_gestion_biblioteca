@@ -41,7 +41,9 @@ Mecanismo Automático: Para generar el identificador (CORRELATIVO) de forma auto
 ## 🔒 Caso 3: Vista de Multas y Optimización de Rendimiento
 Este caso se dividió en dos partes: la creación de un informe detallado de multas y la mejora del rendimiento de ese informe.
 
-## 🔒 Caso 3.1 (Informe de Multas): Se creó una vista (VW_DETALLE_MULTAS) que calcula, para los préstamos entregados con atraso:
+## 🔒 Caso 3.1 (Informe de Multas): 
+
+Se creó una vista (VW_DETALLE_MULTAS) que calcula, para los préstamos entregados con atraso:
 
 Los días de atraso en la devolución.
 
@@ -51,4 +53,26 @@ La rebaja aplicada a los alumnos de carreras con convenio especial (Ing. Prevenc
 
 El valor final de la multa a pagar.
 
-## 🔒 Caso 3.2 (Optimización): Para asegurar que la consulta de la vista (VW_DETALLE_MULTAS) se ejecutara rápidamente (pasando de un escaneo completo de tabla a un acceso directo), se creó un índice compuesto en la tabla PRESTAMO. Esto mejoró el plan de ejecución y el rendimiento general del informe.
+## 🔒 Caso 3.2 (Optimización): 
+
+Para asegurar que la consulta de la vista (VW_DETALLE_MULTAS) se ejecutara rápidamente (pasando de un escaneo completo de tabla a un acceso directo), se creó un índice compuesto en la tabla PRESTAMO. Esto mejoró el plan de ejecución y el rendimiento general del informe.
+
+
+## Visuales de algunas consultas: 
+
+
+<img width="941" height="390" alt="Captura de pantalla 2025-12-15 165753" src="https://github.com/user-attachments/assets/9598cee8-5fe4-48fb-b27a-fe04991495e7" />
+
+<img width="1434" height="735" alt="Captura de pantalla 2025-12-15 165342" src="https://github.com/user-attachments/assets/230933f6-2947-441d-9886-a4226113d11a" />
+<img width="1437" height="673" alt="Captura de pantalla 2025-12-15 165401" src="https://github.com/user-attachments/assets/b1b36657-dd5c-41e6-9415-1ec264800560" />
+
+
+<img width="1502" height="575" alt="Captura de pantalla 2025-12-15 165613" src="https://github.com/user-attachments/assets/919fa763-38ab-4929-a6d1-ccdb844c3b00" />
+<img width="1444" height="604" alt="Captura de pantalla 2025-12-15 165641" src="https://github.com/user-attachments/assets/9578a3a7-05b0-4b48-927b-cea55add6b60" />
+
+
+
+Revisión de plan de ejecución :
+
+<img width="1025" height="590" alt="Captura de pantalla 2025-12-15 165846" src="https://github.com/user-attachments/assets/adc973a5-34a0-4624-9ede-3288e20fb97a" />
+
