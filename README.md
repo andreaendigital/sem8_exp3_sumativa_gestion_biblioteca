@@ -8,57 +8,47 @@ Este proyecto consiste en el rediseño y optimización de los procesos de gesti�
 ## 🏛️ Contexto del Negocio y Requisitos
 
 La base de datos utiliza un modelo relacional para gestionar:
-* [cite_start]**Alumnos** y sus **Carreras** y **Escuelas**[cite: 35, 113, 53].
-* [cite_start]**Empleados** de la biblioteca[cite: 64].
-* [cite_start]**Libros** y sus **Ejemplares** y **Autores**[cite: 89, 78, 138].
-* [cite_start]**Préstamos** de libros[cite: 6].
+* Alumnos y sus Carreras y Escuelas
+* Empleados de la biblioteca
+* Libros y sus Ejemplares y Autores
+* Préstamos de libros
 * **Reglas de negocio** para multas y rebajas (**REBAJA\_MULTA**, **VALOR\_MULTA\_PRESTAMO**).
 
 El objetivo principal es establecer un control de calidad en los préstamos y calcular correctamente las multas por devoluciones tardías.
 
 ---
 
-## 🔒 Caso 1: Estrategia de Seguridad (Usuarios, Roles y Sinónimos)
+## 🔒 Caso 1: Estrategia de Seguridad (Acceso y Permisos)
 
-Se implementó una estrategia de seguridad basada en el principio del menor privilegio.
+Este caso se centró en la organización de la base de datos a nivel de usuarios y roles. La meta era establecer quién puede hacer qué, siguiendo el principio de "menor privilegio".
 
-### 1. Usuarios y Roles
+Usuarios Definidos: Se crearon dos usuarios principales: PRY2205_USER1 (el dueño de todas las tablas y constructor de soluciones) y PRY2205_USER2 (el desarrollador de consultas para el informe del Caso 2).
 
-| Objeto | Propósito | Privilegios de Sistema |
-| :--- | :--- | :--- |
-| **`PRY2205_USER1`** | Dueño (Owner) del esquema de tablas y responsable de construir y optimizar las soluciones del Caso 3. Asignado a `PRY2205_ROL_D`. | `CREATE TABLE`, `CREATE VIEW`, `CREATE INDEX`, `CREATE PUBLIC SYNONYM`, `UNLIMITED TABLESPACE`, `CREATE SESSION`. |
-| **`PRY2205_USER2`** | Usuario desarrollador, responsable de generar el informe del Caso 2. Asignado a `PRY2205_ROL_P`. | `CREATE TABLE`, `CREATE SEQUENCE`, `CREATE TRIGGER`, `CREATE SYNONYM`, `CREATE SESSION`. |
-| **`PRY2205_ROL_D`** | Rol de **Dueño/Desarrollo** (Asignado a USER1). | Ver tabla de privilegios de USER1. |
-| **`PRY2205_ROL_P`** | Rol de **Consulta/Implementación** (Asignado a USER2). | `SELECT` sobre todas las tablas de USER1 + permisos de creación de objetos necesarios (Tabla/Trigger/Sequence). |
+Roles y Permisos: Se crearon roles (PRY2205_ROL_D y PRY2205_ROL_P) para agrupar y asignar permisos de forma eficiente.
 
-### 2. Sinónimos Públicos
+Acceso Simple: Se implementó la creación de sinónimos públicos para todas las tablas (como LIBRO en lugar de PRY2205_USER1.LIBRO), permitiendo a otros usuarios acceder a los datos de forma simple sin conocer el nombre del dueño.
 
-Se crearon sinónimos públicos para todas las tablas del esquema (`ALUMNO`, `LIBRO`, `PRESTAMO`, etc.) para permitir que otros usuarios (como `PRY2205_USER2`) accedan a los objetos sin prefijar el nombre del dueño.
+## 🔒 Caso 2: Creación de Informe de Stock (Control de Ejemplares)
 
-**Requisito Clave:** Todas las sentencias SQL de los casos 2 y 3 acceden a las tablas a través de estos sinónimos públicos.
+El objetivo fue generar un informe mensual que ayudara al personal de la biblioteca a controlar el flujo de libros y el stock.
 
----
+Filtro Temporal y Personal: El informe se enfocó únicamente en los préstamos realizados dos años antes del año actual y gestionados por tres empleados específicos (190, 180 y 150).
 
-## 📊 Caso 2: Creación de Informe de Stock (`CONTROL_STOCK_LIBROS`)
+Cálculos Clave: Se calcularon los ejemplares totales, en préstamo y disponibles, y se determinó el porcentaje de ocupación y un indicador de stock crítico ('S' o 'N') para cada libro.
 
-**Usuario Ejecutor:** `PRY2205_USER2`
+Mecanismo Automático: Para generar el identificador (CORRELATIVO) de forma automática, se utilizó una secuencia en conjunto con un disparador (TRIGGER). Esto se hizo para superar las restricciones de Oracle que impiden la inserción directa de secuencias en consultas masivas, asegurando que cada fila insertada tenga un ID único y no nulo.
 
-Se implementó un proceso para almacenar el stock de ejemplares, considerando solo los préstamos gestionados por los empleados **190, 180 y 150**, y con una fecha de inicio hace **dos años** (`EXTRACT(YEAR FROM SYSDATE) - 2`).
+## 🔒 Caso 3: Vista de Multas y Optimización de Rendimiento
+Este caso se dividió en dos partes: la creación de un informe detallado de multas y la mejora del rendimiento de ese informe.
 
-### 1. Componentes Creados
+## 🔒 Caso 3.1 (Informe de Multas): Se creó una vista (VW_DETALLE_MULTAS) que calcula, para los préstamos entregados con atraso:
 
-* **Secuencia:** `SEQ_CONTROL_STOCK`
-* **Tabla de Salida:** `CONTROL_STOCK_LIBROS`
-* **Disparador:** `TRG_CONTROL_STOCK_CORR` (Asigna automáticamente `SEQ_CONTROL_STOCK.NEXTVAL` a la clave primaria `CORRELATIVO` para evitar errores `ORA-02287` y `ORA-01400`).
+Los días de atraso en la devolución.
 
-### 2. Lógica del Informe
+El valor de la multa bruta (3% del precio del libro por día).
 
-El informe calcula:
-* `EJEMPLARES_TOTAL` y `EJEMPLARES_PRESTAMO`.
-* `EJEMPLARES_DISPONIBLES`: Calculado como `TOTAL - EN_PRESTAMO`.
-* `PORC_EN_PRESTAMO`: Porcentaje redondeado de ejemplares en préstamo respecto al total.
-* `INDICADOR_STOCK_CRITICO`: 'S' si hay más de 2 ejemplares disponibles, 'N' en caso contrario.
+La rebaja aplicada a los alumnos de carreras con convenio especial (Ing. Prevención de Riesgos, Gastronomía, etc.).
 
-**Consulta de Validación:**
-```sql
-SELECT * FROM CONTROL_STOCK_LIBROS;
+El valor final de la multa a pagar.
+
+## 🔒 Caso 3.2 (Optimización): Para asegurar que la consulta de la vista (VW_DETALLE_MULTAS) se ejecutara rápidamente (pasando de un escaneo completo de tabla a un acceso directo), se creó un índice compuesto en la tabla PRESTAMO. Esto mejoró el plan de ejecución y el rendimiento general del informe.
